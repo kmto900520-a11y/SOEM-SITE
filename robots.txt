@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://soem.cc/sitemap.xml
