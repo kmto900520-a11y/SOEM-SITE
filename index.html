@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOEM - Scent Of Every Moment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-100 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-200 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-300 {
+            animation-delay: 0.3s;
+        }
+
+        /* Scroll Animation Hero */
+        #hero-scroll-container {
+            height: 400vh;
+            position: relative;
+        }
+
+        #hero-sticky {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #hero-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .hero-text-content {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            padding: 0 1rem;
+            transition: opacity 0.4s ease;
+        }
+
+        /* Loading screen */
+        #loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.6s ease;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-bar-container {
+            width: 200px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 24px;
+        }
+
+        .loading-bar {
+            height: 100%;
+            background: white;
+            width: 0%;
+            transition: width 0.15s ease;
+        }
+
+        /* Naver TalkTalk floating button */
+        .naver-talk-btn {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 9000;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #03C75A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(3, 199, 90, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .naver-talk-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 28px rgba(3, 199, 90, 0.55);
+        }
+
+        .naver-talk-btn svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+
+        .naver-talk-label {
+            position: fixed;
+            bottom: 36px;
+            right: 98px;
+            z-index: 9000;
+            background: white;
+            color: #333;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .naver-talk-btn:hover+.naver-talk-label {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+
+<body class="bg-white text-black antialiased">
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <span class="text-white text-3xl font-bold tracking-tighter">SOEM</span>
+        <div class="loading-bar-container">
+            <div class="loading-bar" id="loading-bar"></div>
+        </div>
+        <span class="text-gray-500 text-xs mt-4 tracking-widest uppercase" id="loading-text">Loading frames...</span>
+    </div>
+
+    <!-- Header -->
+    <header id="main-header"
+        class="fixed w-full z-50 transition-all duration-500 ease-in-out bg-black/0 text-white py-6">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold tracking-tighter">에스오이엠 SOEM</a>
+            <nav class="hidden md:flex space-x-12 text-sm font-medium tracking-wide">
+                <a href="#brand" class="hover:text-gray-300 transition-colors">브랜드</a>
+                <a href="#products" class="hover:text-gray-300 transition-colors">제작품목</a>
+                <a href="https://talk.naver.com/ct/w3v44vu?frm=psf" target="_blank" rel="noopener noreferrer"
+                    class="hover:text-gray-300 transition-colors">문의하기</a>
+            </nav>
+            <button class="md:hidden text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section: Scroll-Driven Frame Animation -->
+    <div id="hero-scroll-container">
+        <div id="hero-sticky">
+            <canvas id="hero-canvas"></canvas>
+            <div class="hero-overlay" id="hero-overlay" style="background: rgba(0,0,0,0.5);"></div>
+            <div class="hero-text-content" id="hero-text">
+                <p class="text-sm md:text-base font-medium tracking-[0.3em] mb-6 fade-in-up uppercase"
+                    style="text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
+                    Premium Fragrance OEM/ODM</p>
+                <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 fade-in-up delay-100 leading-snug"
+                    style="text-shadow: 0 3px 20px rgba(0,0,0,0.7);">
+                    당신의 브랜드엔,<br>아직 향기가 없습니다
+                </h1>
+                <p class="text-lg md:text-2xl font-medium max-w-xl fade-in-up delay-200 leading-relaxed"
+                    style="text-shadow: 0 2px 16px rgba(0,0,0,0.8);">
+                    최소 20개부터 제작. 디퓨저 · 룸스프레이 · 섬유향수<br>
+                    당신만의 시그니처 향을 완성해 드립니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Brand Story Section -->
+    <section id="brand" class="py-32 bg-white text-black">
+        <div class="container mx-auto px-6">
+            <div class="max-w-5xl mx-auto">
+                <span class="block text-xs font-bold tracking-[0.3em] text-gray-400 mb-6 uppercase text-center">Business
+                    Strategy</span>
+                <h2 class="text-3xl md:text-5xl font-bold mb-20 leading-snug text-center">
+                    단 20개부터 시작하는<br>나만의 향기 브랜드
+                </h2>
+                <div class="grid md:grid-cols-3 gap-16 text-left">
+                    <div class="space-y-6 group">
+                        <div
+                            class="w-16 h-16 border border-black flex items-center justify-center rounded-full text-2xl font-serif group-hover:bg-black group-hover:text-white transition-colors duration-300">
+                            1</div>
+                        <h3 class="text-2xl font-bold">MOQ 20</h3>
+                        <p class="text-gray-800 leading-relaxed font-normal">
+                            부담 없는 수량으로 시작하세요.<br>
+                            소규모 브랜드도 걱정 없이<br>
+                            자신만의 제품을 런칭할 수 있습니다.
+                        </p>
+                    </div>
+                    <div class="space-y-6 group">
+                        <div
+                            class="w-16 h-16 border border-black flex items-center justify-center rounded-full text-2xl font-serif group-hover:bg-black group-hover:text-white transition-colors duration-300">
+                            2</div>
+                        <h3 class="text-2xl font-bold">Multi-Variety</h3>
+                        <p class="text-gray-800 leading-relaxed font-normal">
+                            다품종 소량생산.<br>
+                            다양한 향과 디자인을 테스트하고<br>
+                            시장의 반응에 빠르게 대응하세요.
+                        </p>
+                    </div>
+                    <div class="space-y-6 group">
+                        <div
+                            class="w-16 h-16 border border-black flex items-center justify-center rounded-full text-2xl font-serif group-hover:bg-black group-hover:text-white transition-colors duration-300">
+                            3</div>
+                        <h3 class="text-2xl font-bold">Branding</h3>
+                        <p class="text-gray-800 leading-relaxed font-normal">
+                            단순 제조를 넘어 브랜딩까지.<br>
+                            SOEM이 당신의 브랜드 가치를<br>
+                            함께 만들어갑니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Lineup Section -->
+    <section id="products" class="py-32 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-20 border-b border-gray-200 pb-8">
+                <div>
+                    <span class="block text-xs font-bold tracking-[0.3em] text-gray-400 mb-4 uppercase">Product
+                        Lineup</span>
+                    <h2 class="text-4xl md:text-5xl font-bold">제작 품목</h2>
+                </div>
+                <a href="https://smartstore.naver.com/soem/category/a61ad5c1d4334f4daf0bfaf3206c9a49?cp=1"
+                    target="_blank" rel="noopener noreferrer"
+                    class="hidden md:inline-block text-sm font-bold border-b-2 border-black pb-1 hover:text-gray-600 hover:border-gray-600 transition-colors">더
+                    많은 디자인 보기</a>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-10">
+                <!-- Product 1 -->
+                <div class="group cursor-pointer">
+                    <div class="aspect-[3/4] bg-white overflow-hidden mb-8 relative shadow-sm">
+                        <img src="제작품목/디퓨저 디자인.jpg" alt="디퓨저"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500">
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">디퓨저 (Diffuser)</h3>
+                    <p class="text-sm text-gray-500 font-light">공간을 채우는 은은한 향기</p>
+                </div>
+
+                <!-- Product 2 -->
+                <div class="group cursor-pointer">
+                    <div class="aspect-[3/4] bg-white overflow-hidden mb-8 relative shadow-sm">
+                        <img src="제작품목/룸스프레이 디자인.jpg" alt="룸스프레이"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500">
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">룸 스프레이 (Room Spray)</h3>
+                    <p class="text-sm text-gray-500 font-light">즉각적인 리프레시와 탈취 효과</p>
+                </div>
+
+                <!-- Product 3 -->
+                <div class="group cursor-pointer">
+                    <div class="aspect-[3/4] bg-white overflow-hidden mb-8 relative shadow-sm">
+                        <img src="제작품목/섬유향수 디자인.jpg" alt="섬유향수"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500">
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">섬유 향수 (Fabric Perfume)</h3>
+                    <p class="text-sm text-gray-500 font-light">일상에 스며드는 포근한 향기</p>
+                </div>
+            </div>
+
+            <div class="mt-16 text-center md:hidden">
+                <a href="https://smartstore.naver.com/soem/category/a61ad5c1d4334f4daf0bfaf3206c9a49?cp=1"
+                    target="_blank" rel="noopener noreferrer"
+                    class="inline-block text-sm font-bold border-b-2 border-black pb-1">더 많은 디자인 보기</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black text-white py-20">
+        <div class="container mx-auto px-6">
+            <div class="mb-16">
+                <div>
+                    <h2 class="text-5xl font-bold mb-8 tracking-tighter">SOEM</h2>
+                    <p class="text-gray-400 max-w-sm font-light leading-relaxed">
+                        scentoem@gmail.com
+                    </p>
+                </div>
+            </div>
+            <div
+                class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-medium uppercase tracking-widest">
+                <p>&copy; 2026 SOEM. ALL RIGHTS RESERVED.</p>
+                <div class="flex space-x-8 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-white transition-colors">INSTAGRAM</a>
+                    <a href="#" class="hover:text-white transition-colors">PRIVACY POLICY</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Naver TalkTalk Floating Button -->
+    <a href="https://talk.naver.com/ct/w3v44vu?frm=psf" target="_blank" rel="noopener noreferrer" class="naver-talk-btn"
+        id="naver-talk-btn" aria-label="네이버 톡톡 상담">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M12 2C6.48 2 2 5.58 2 10c0 2.8 1.86 5.25 4.63 6.7L5.8 20.4c-.16.48.36.9.78.62l4.1-2.56c.43.04.87.06 1.32.06 5.52 0 10-3.58 10-8S17.52 2 12 2z" />
+        </svg>
+    </a>
+    <div class="naver-talk-label">💬 톡톡 상담하기</div>
+
+    <script>
+        // ===== Configuration =====
+        const FRAME_COUNT = 80;
+        const IMAGE_PATH = 'images/___1080p_202602181038_';
+
+        // ===== DOM Elements =====
+        const canvas = document.getElementById('hero-canvas');
+        const ctx = canvas.getContext('2d');
+        const header = document.getElementById('main-header');
+        const heroContainer = document.getElementById('hero-scroll-container');
+        const heroText = document.getElementById('hero-text');
+        const heroOverlay = document.getElementById('hero-overlay');
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingBar = document.getElementById('loading-bar');
+        const loadingTextEl = document.getElementById('loading-text');
+
+        // ===== Frame Storage =====
+        const frames = [];
+        let currentFrame = 0;
+        let imagesLoaded = 0;
+
+        // ===== Build frame file path =====
+        function getFramePath(index) {
+            return IMAGE_PATH + String(index).padStart(3, '0') + '.jpg';
+        }
+
+        // ===== Preload all frames =====
+        function preloadFrames() {
+            return new Promise((resolve) => {
+                for (let i = 0; i < FRAME_COUNT; i++) {
+                    const img = new Image();
+                    img.src = getFramePath(i);
+                    img.onload = () => {
+                        imagesLoaded++;
+                        const progress = Math.round((imagesLoaded / FRAME_COUNT) * 100);
+                        loadingBar.style.width = progress + '%';
+                        loadingTextEl.textContent = `Loading ${progress}%`;
+                        if (imagesLoaded === FRAME_COUNT) {
+                            resolve();
+                        }
+                    };
+                    img.onerror = () => {
+                        imagesLoaded++;
+                        if (imagesLoaded === FRAME_COUNT) resolve();
+                    };
+                    frames[i] = img;
+                }
+            });
+        }
+
+        // ===== Resize canvas to match viewport =====
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            drawFrame(currentFrame);
+        }
+
+        // ===== Draw a specific frame to the canvas =====
+        function drawFrame(index) {
+            if (!frames[index] || !frames[index].complete) return;
+            const img = frames[index];
+
+            // Cover-fit: maintain aspect ratio, fill the canvas
+            const canvasRatio = canvas.width / canvas.height;
+            const imgRatio = img.naturalWidth / img.naturalHeight;
+
+            let drawW, drawH, drawX, drawY;
+            if (imgRatio > canvasRatio) {
+                drawH = canvas.height;
+                drawW = drawH * imgRatio;
+                drawX = (canvas.width - drawW) / 2;
+                drawY = 0;
+            } else {
+                drawW = canvas.width;
+                drawH = drawW / imgRatio;
+                drawX = 0;
+                drawY = (canvas.height - drawH) / 2;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        }
+
+        // ===== Scroll handler =====
+        function onScroll() {
+            const rect = heroContainer.getBoundingClientRect();
+            const scrollableHeight = heroContainer.offsetHeight - window.innerHeight;
+            const scrolled = -rect.top;
+            const progress = Math.max(0, Math.min(1, scrolled / scrollableHeight));
+            const frameIndex = Math.min(FRAME_COUNT - 1, Math.floor(progress * FRAME_COUNT));
+
+            if (frameIndex !== currentFrame) {
+                currentFrame = frameIndex;
+                requestAnimationFrame(() => drawFrame(currentFrame));
+            }
+
+            // Fade out hero text and brighten overlay as user scrolls
+            const textOpacity = Math.max(0, 1 - (progress * 3));
+            heroText.style.opacity = textOpacity;
+
+            // Overlay: starts at 0.5 (dark), fades to 0 (bright) as scroll progresses
+            const overlayOpacity = Math.max(0, 0.5 - (progress * 0.6));
+            heroOverlay.style.background = `rgba(0,0,0,${overlayOpacity})`;
+
+            // Header color change (after hero section)
+            const heroBottom = heroContainer.offsetHeight;
+            if (window.scrollY > heroBottom - 100) {
+                header.classList.remove('bg-black/0', 'text-white', 'py-6');
+                header.classList.add('bg-white/95', 'text-black', 'shadow-sm', 'backdrop-blur-md', 'py-4');
+            } else {
+                header.classList.add('bg-black/0', 'text-white', 'py-6');
+                header.classList.remove('bg-white/95', 'text-black', 'shadow-sm', 'backdrop-blur-md', 'py-4');
+            }
+        }
+
+        // ===== Initialize =====
+        async function init() {
+            resizeCanvas();
+            await preloadFrames();
+
+            // Hide loading screen
+            loadingScreen.classList.add('hidden');
+            setTimeout(() => { loadingScreen.style.display = 'none'; }, 600);
+
+            // Draw first frame
+            drawFrame(0);
+
+            // Attach listeners
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
